@@ -1,0 +1,26 @@
+{
+  "name": "yakuzai",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --inspect ./index.js",
+    "ui": "browser-sync start --inspect --config bs-config.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "browser-sync": "^2.26.13",
+    "nodemon": "^2.0.6"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "chromedriver": "^87.0.2",
+    "express": "^4.17.1",
+    "google-it": "^1.5.4",
+    "node-excel-export": "^1.4.4",
+    "pug": "^3.0.0",
+    "selenium-webdriver": "^4.0.0-alpha.8",
+    "serp": "^2.1.0"
+  }
+}

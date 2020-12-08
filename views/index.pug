@@ -1,0 +1,13 @@
+extends layout
+
+block layout-content
+  .container
+  form(action="/",method="POST")
+    .row.d-flex.justify-content-between
+      .form-group.col
+        label(for='companyNameList') Company Name List
+        textarea#companyNameList.form-control(rows='3', name="companyNameList")
+      .form-group.col
+        label(for='drugNameList') Drugs Name List
+        textarea#drugNameList.form-control(rows='3', name="drugNameList")
+    button.btn.btn-primary(type='submit') Get Info

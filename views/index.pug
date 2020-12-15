@@ -3,11 +3,16 @@ extends layout
 block layout-content
   .container
   form(action="/",method="POST")
-    .row.d-flex.justify-content-between
+    .row.d-flex.justify-content-between.flex-wrap
       .form-group.col
         label(for='companyNameList') Company Name List
         textarea#companyNameList.form-control(rows='3', name="companyNameList")
       .form-group.col
         label(for='drugNameList') Drugs Name List
         textarea#drugNameList.form-control(rows='3', name="drugNameList")
+
+    .row
+      .form-group.col
+        label.col-sm-5.col-form-label(for='numberResult') Number links you want to get
+        input.form-control(type='number' name='numberResult' placeholder='Number links you want to get')
     button.btn.btn-primary(type='submit') Get Info

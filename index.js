@@ -46,6 +46,7 @@ app.get("/", (req, res) => {
 app.post("/", urlencodedParser, async (req, res) => {
     let companyNameList = req.body.companyNameList.split("\n");
     let drugNameList = req.body.drugNameList.split("\n");
+    let numberResult = req.body.numberResult;
 
     let resultList = await getData();
     createExcel(resultList);
@@ -64,13 +65,13 @@ app.post("/", urlencodedParser, async (req, res) => {
                     return values;
                 });
 
-            let title = titles.join("\n");
+            let title = titles.slice(0,numberResult).join("\n");
 
             let links = await map(linkList, e => e.getAttribute('href'))
                 .then(function (values) {
                     return values;
                 });
-            let link = links.join("\n");
+            let link = links.slice(0,numberResult).join("\n");
 
             getResultProcess.push({
                 "companyName": companyNameList[i],

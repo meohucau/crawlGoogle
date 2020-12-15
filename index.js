@@ -53,8 +53,8 @@ app.post("/", urlencodedParser, async (req, res) => {
     async function getData() {
         let getResultProcess = [];
         for (let i = 0; i < companyNameList.length; i++) {
-            let queryString = companyNameList[i] + drugNameList[i];
-            await (await driver).sleep(2000);
+            let queryString = companyNameList[i] + " " + drugNameList[i];
+            await driver.sleep(2000);
             await driver.get('https://google.jp');
             await driver.findElement(By.xpath("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input")).sendKeys(queryString, webdriver.Key.ENTER);
             let titleList = driver.findElements(By.xpath("//*[@id='rso']/div/div/div[1]/a/h3/span"));
@@ -65,7 +65,6 @@ app.post("/", urlencodedParser, async (req, res) => {
                 });
 
             let title = titles.join("\n");
-            //console.log(titles);
 
             let links = await map(linkList, e => e.getAttribute('href'))
                 .then(function (values) {
@@ -153,32 +152,14 @@ app.post("/", urlencodedParser, async (req, res) => {
         );
 
         // You can then return this straight
-        res.attachment('report.xlsx'); // This is sails.js specific (in general you need to set headers)
+        res.attachment('report.xlsx'); 
         return res.send(report);
-
-        // OR you can save this buffer to the disk by creating a file.
     }
 
 
 
 });
-/**
- * Server Activation
- */
 
-function getSearchResult(queryString) {
-    var options = {
-        host: "google.jp",
-        qs: {
-            q: queryString,
-            filter: 0,
-            pws: 0
-        },
-        num: 10
-    };
-    const links = serp.search(options)
-    return links;
-}
 app.listen(port, () => {
     console.log(`Listening to ${port}`);
 })

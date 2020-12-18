@@ -44,40 +44,41 @@ app.get("/", (req, res) => {
 })
 
 app.post("/", urlencodedParser, async (req, res) => {
-    let companyNameList = req.body.companyNameList.split("\n");
+    let companyName = req.body.companyName;
     let drugNameList = req.body.drugNameList.split("\n");
     let numberResult = req.body.numberResult;
 
     let resultList = await getData();
-    createExcel(resultList);
+    
+    //createExcel(resultList);
 
     async function getData() {
         let getResultProcess = [];
-        for (let i = 0; i < companyNameList.length; i++) {
-            let queryString = companyNameList[i] + " " + drugNameList[i];
+        for (let i = 0; i < drugNameList.length; i++) {
+            let queryString = companyName + " " + drugNameList[i];
             await driver.sleep(2000);
             await driver.get('https://google.jp');
             await driver.findElement(By.xpath("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input")).sendKeys(queryString, webdriver.Key.ENTER);
-            let titleList = driver.findElements(By.xpath("//*[@id='rso']/div/div/div[1]/a/h3/span"));
-            let linkList = driver.findElements(By.xpath("//*[@id='rso']/div/div/div[1]/a"));
+            let titleList = driver.findElements(By.xpath("//h3/span"));
+            let linkList = driver.findElements(By.xpath("//a/h3/span/parent::h3/parent::a"));
+            
             let titles = await map(titleList, e => e.getText())
                 .then(function (values) {
                     return values;
                 });
 
-            let title = titles.slice(0,numberResult).join("\n");
-
+            titles = titles.slice(0, numberResult);
             let links = await map(linkList, e => e.getAttribute('href'))
                 .then(function (values) {
                     return values;
                 });
-            let link = links.slice(0,numberResult).join("\n");
+            links = links.slice(0, numberResult);
 
             getResultProcess.push({
-                "companyName": companyNameList[i],
+                "companyName": companyName,
                 "drugName": drugNameList[i],
-                "title": title,
-                "link": link,
+                "titles": titles,
+                "links": links,
             })
             //console.log(links);
         }
@@ -85,78 +86,80 @@ app.post("/", urlencodedParser, async (req, res) => {
     }
 
 
-    function createExcel(resultList) {
-        // You can define styles as json object
-        const styles = {
-            headerDark: {
-                fill: {
-                    fgColor: {
-                        rgb: '00FE92'
-                    }
-                },
-                font: {
-                    color: {
-                        rgb: '000000'
-                    },
-                    sz: 12
-                }
-            },
-            linkStyle: {
-                alignment: {
-                    wrapText: true,
-                    vertical: "center"
-                }
-            }
-        };
+    // function createExcel(resultList) {
+    //     // You can define styles as json object
+    //     const styles = {
+    //         headerDark: {
+    //             fill: {
+    //                 fgColor: {
+    //                     rgb: '00FE92'
+    //                 }
+    //             },
+    //             font: {
+    //                 color: {
+    //                     rgb: '000000'
+    //                 },
+    //                 sz: 12
+    //             }
+    //         },
+    //         linkStyle: {
+    //             alignment: {
+    //                 wrapText: true,
+    //                 vertical: "center"
+    //             }
+    //         }
+    //     };
 
-        //Here you specify the export structure
-        const specification = {
-            companyName: { // <- the key should match the actual data key
-                displayName: 'Company Name', // <- Here you specify the column header
-                headerStyle: styles.headerDark, // <- Header style
-                cellStyle: styles.linkStyle,
-                width: 220 // <- width in pixels
-            },
-            drugName: {
-                displayName: 'Drug Name',
-                headerStyle: styles.headerDark,
-                cellStyle: styles.linkStyle,
-                // cellFormat: function (value, row) { // <- Renderer function, you can access also any row.property
-                //     return (value == 1) ? 'Active' : 'Inactive';
-                // },
-                width: 200 // <- width in chars (when the number is passed as string)
-            },
-            title: {
-                displayName: 'Title',
-                headerStyle: styles.headerDark,
-                cellStyle: styles.linkStyle, // <- Cell style
-                width: 600 // <- width in pixels
-            },
-            link: {
-                displayName: 'Link',
-                headerStyle: styles.headerDark,
-                cellStyle: styles.linkStyle, // <- Cell style
-                width: 600 // <- width in pixels
-            }
-        }
+    //     //Here you specify the export structure
+    //     const specification = {
+    //         companyName: { // <- the key should match the actual data key
+    //             displayName: 'Company Name', // <- Here you specify the column header
+    //             headerStyle: styles.headerDark, // <- Header style
+    //             cellStyle: styles.linkStyle,
+    //             width: 220 // <- width in pixels
+    //         },
+    //         drugName: {
+    //             displayName: 'Drug Name',
+    //             headerStyle: styles.headerDark,
+    //             cellStyle: styles.linkStyle,
+    //             // cellFormat: function (value, row) { // <- Renderer function, you can access also any row.property
+    //             //     return (value == 1) ? 'Active' : 'Inactive';
+    //             // },
+    //             width: 200 // <- width in chars (when the number is passed as string)
+    //         },
+    //         title: {
+    //             displayName: 'Title',
+    //             headerStyle: styles.headerDark,
+    //             cellStyle: styles.linkStyle, // <- Cell style
+    //             width: 600 // <- width in pixels
+    //         },
+    //         link: {
+    //             displayName: 'Link',
+    //             headerStyle: styles.headerDark,
+    //             cellStyle: styles.linkStyle, // <- Cell style
+    //             width: 600 // <- width in pixels
+    //         }
+    //     }
 
-        // Create the excel report.
-        // This function will return Buffer
-        const report = excel.buildExport(
-            [ // <- Notice that this is an array. Pass multiple sheets to create multi sheet report
-                {
-                    name: 'Report', // <- Specify sheet name (optional)
-                    specification: specification, // <- Report specification
-                    data: resultList // <-- Report data
-                }
-            ]
-        );
+    //     // Create the excel report.
+    //     // This function will return Buffer
+    //     const report = excel.buildExport(
+    //         [ // <- Notice that this is an array. Pass multiple sheets to create multi sheet report
+    //             {
+    //                 name: 'Report', // <- Specify sheet name (optional)
+    //                 specification: specification, // <- Report specification
+    //                 data: resultList // <-- Report data
+    //             }
+    //         ]
+    //     );
 
-        // You can then return this straight
-        res.attachment('report.xlsx'); 
-        return res.send(report);
-    }
-
+    //     // You can then return this straight
+    //     res.attachment('report.xlsx'); 
+        //return res.send(report);
+        return res.render("result", {
+            resultList: resultList
+        });//ADD HERE redirect o render
+    //}
 
 
 });

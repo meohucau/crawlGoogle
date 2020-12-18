@@ -1,0 +1,23 @@
+extends layout
+block layout-content
+  table.table.table-hover
+    thead
+        tr
+        th(scope='col') Company Name
+        th(scope='col') Drug Name
+        th(scope='col') Title
+        th(scope='col') Link
+    tbody
+        each result in resultList
+            tr
+            td= result.companyName
+            td= result.drugName
+            td
+                ul.list-group
+                    each title in result.titles
+                        li.list-group-item= title
+            td
+                ul.list-group
+                    each link in result.links
+                        li.list-group-item
+                            a(href=link target='_blank')= link

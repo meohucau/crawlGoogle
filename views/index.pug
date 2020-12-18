@@ -3,14 +3,15 @@ extends layout
 block layout-content
   .container
   form(action="/",method="POST")
-    .row.d-flex.justify-content-between.flex-wrap
+    .row
       .form-group.col
-        label(for='companyNameList') Company Name List
-        textarea#companyNameList.form-control(rows='3', name="companyNameList")
+        label(for='companyName') Company Name
+        input.form-control(type='Company Name' name='companyName' placeholder='Company Name')
+
+    .row
       .form-group.col
         label(for='drugNameList') Drugs Name List
         textarea#drugNameList.form-control(rows='3', name="drugNameList")
-
     .row
       .form-group.col
         label.col-sm-5.col-form-label(for='numberResult') Number links you want to get

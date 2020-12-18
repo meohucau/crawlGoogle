@@ -3,13 +3,15 @@ block layout-content
   table.table.table-hover
     thead
         tr
+        th(scope='col') #
         th(scope='col') Company Name
         th(scope='col') Drug Name
         th(scope='col') Title
         th(scope='col') Link
     tbody
-        each result in resultList
+        each result,index in resultList
             tr
+            th= index
             td= result.companyName
             td= result.drugName
             td

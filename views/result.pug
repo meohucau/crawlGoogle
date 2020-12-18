@@ -3,22 +3,22 @@ block layout-content
   table.table.table-hover
     thead
         tr
-        th(scope='col') #
-        th(scope='col') Company Name
-        th(scope='col') Drug Name
-        th(scope='col') Title
-        th(scope='col') Link
+        th.w-5(scope='col') #
+        th.w-10(scope='col') Company Name
+        th.w-10(scope='col') Drug Name
+        th.w-35(scope='col') Title
+        th.w-40(scope='col') Link
     tbody
         each result,index in resultList
             tr
-            th= index
-            td= result.companyName
-            td= result.drugName
-            td
+            td.w-5= index
+            td.w-10= result.companyName
+            td.w-10= result.drugName
+            td.w-35
                 ul.list-group
                     each title in result.titles
                         li.list-group-item= title
-            td
+            td.w-40
                 ul.list-group
                     each link in result.links
                         li.list-group-item

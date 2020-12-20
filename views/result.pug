@@ -6,8 +6,8 @@ block layout-content
         .w-15 Drug Name
         .w-65
             .d-flex
-                .list-group-item Title
-                .list-group-item Link
+                .list-group-item.w-40 Title
+                .list-group-item.w-60 Link
     each result,index in resultList
         .d-flex.result-list
             .w-10.padding-10.font-bold= index
@@ -16,7 +16,7 @@ block layout-content
             .w-65
                 each info in result.infoList
                     .d-flex.info.padding-10
-                        .list-group-item= info.title
-                        .list-group-item
+                        .list-group-item.w-40= info.title
+                        .list-group-item.w-60
                             a.tiptext(href=info.link target='_blank')= info.link
                                 

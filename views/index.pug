@@ -1,19 +1,24 @@
 extends layout
 
 block layout-content
-  .container
-  form(action="/",method="POST")
-    .row
-      .form-group.col
-        label(for='companyName') Company Name
-        input.form-control(type='Company Name' name='companyName' placeholder='Company Name')
-
-    .row
-      .form-group.col
-        label(for='drugNameList') Drugs Name List
-        textarea#drugNameList.form-control(rows='3', name="drugNameList")
-    .row
-      .form-group.col
-        label.col-sm-5.col-form-label(for='numberResult') Number links you want to get
-        input.form-control(type='number' name='numberResult' placeholder='Number links you want to get')
-    button.btn.btn-primary(type='submit') Get Info
+  .form-style-2
+    .form-style-2-heading Write info
+    form(action='/' method='post')
+      label(for='companyNameList')
+        span
+          | Company List 
+          span.required *
+        textarea.textarea-field(id='companyNameList' name='companyNameList')
+      label(for='drugNameList')
+        span
+          | Drug List 
+          span.required *
+        textarea.textarea-field(id='drugNameList' name='drugNameList')
+      label(for='numberResult')
+        span
+          | Number links
+          span.required *
+        input.input-field(type='number' id='numberResult' name='numberResult')
+      label
+        span  
+        input(type='submit' onclick='return validateFrom()' value='Get Info')

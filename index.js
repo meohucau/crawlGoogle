@@ -33,7 +33,7 @@ app.set("view engine", "pug");
 var urlencodedParser = bodyParser.urlencoded({
     extended: false
 })
-
+app.use(express.static(__dirname + '/public'));
 /**
  * Routes Definitions
  */
@@ -43,9 +43,16 @@ app.get("/", (req, res) => {
     });
 })
 
+app.get("/resultList", (req, res) => {
+    res.render("resultList", {
+        title: "Home"
+    });
+})
+
 app.post("/", urlencodedParser, async (req, res) => {
-    let companyName = req.body.companyName;
+    //let companyName = req.body.companyName;
     let drugNameList = req.body.drugNameList.split("\n");
+    let companyNameList = req.body.companyNameList.split("\n");
     let numberResult = req.body.numberResult;
 
     let resultList = await getData();
@@ -54,13 +61,14 @@ app.post("/", urlencodedParser, async (req, res) => {
 
     async function getData() {
         let getResultProcess = [];
-        for (let i = 0; i < drugNameList.length; i++) {
-            let queryString = companyName + " " + drugNameList[i];
+        let infoList = [];
+        for (let i = 0; i < companyNameList.length; i++) {
+            let queryString = companyNameList[i] + " " + drugNameList[i];
             await driver.sleep(2000);
             await driver.get('https://google.jp');
-            await driver.findElement(By.xpath("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input")).sendKeys(queryString, webdriver.Key.ENTER);
-            let titleList = driver.findElements(By.xpath("//h3/span"));
-            let linkList = driver.findElements(By.xpath("//a/h3/span/parent::h3/parent::a"));
+            await driver.findElement(By.xpath("//*/input[@type='text']")).sendKeys(queryString, webdriver.Key.ENTER);
+            let titleList = driver.findElements(By.xpath("//*[@id='rso']//a/h3/span"));
+            let linkList = driver.findElements(By.xpath("//*[@id='rso']//a/h3/span/parent::h3/parent::a"));
             
             let titles = await map(titleList, e => e.getText())
                 .then(function (values) {
@@ -73,18 +81,30 @@ app.post("/", urlencodedParser, async (req, res) => {
                     return values;
                 });
             links = links.slice(0, numberResult);
+           
+            infoList = await getInfoList(titles, links);
 
             getResultProcess.push({
-                "companyName": companyName,
+                "companyName": companyNameList[i],
                 "drugName": drugNameList[i],
-                "titles": titles,
-                "links": links,
+                "infoList": infoList
             })
             //console.log(links);
         }
         return getResultProcess;
     }
-
+    
+   async function getInfoList(titles,links){
+        let result = []
+        for (let i = 0; i < titles.length; i++) {
+            result.push({
+                "title": titles[i],
+                "link": links[i]
+            }) 
+        }
+        return result; 
+    }
+        
 
     // function createExcel(resultList) {
     //     // You can define styles as json object

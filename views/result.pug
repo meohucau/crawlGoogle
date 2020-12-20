@@ -1,25 +1,22 @@
 extends layout
 block layout-content
-  table.table.table-hover
-    thead
-        tr
-        th.w-5(scope='col') #
-        th.w-10(scope='col') Company Name
-        th.w-10(scope='col') Drug Name
-        th.w-35(scope='col') Title
-        th.w-40(scope='col') Link
-    tbody
-        each result,index in resultList
-            tr
-            td.w-5= index
-            td.w-10= result.companyName
-            td.w-10= result.drugName
-            td.w-35
-                ul.list-group
-                    each title in result.titles
-                        li.list-group-item= title
-            td.w-40
-                ul.list-group
-                    each link in result.links
-                        li.list-group-item
-                            a(href=link target='_blank')= link
+    .d-flex.nav-bar
+        .w-10 #
+        .w-15 Company Name
+        .w-15 Drug Name
+        .w-65
+            .d-flex
+                .list-group-item Title
+                .list-group-item Link
+    each result,index in resultList
+        .d-flex.result-list
+            .w-10.padding-10.font-bold= index
+            .w-15.padding-10= result.companyName
+            .w-15.padding-10= result.drugName
+            .w-65
+                each info in result.infoList
+                    .d-flex.info.padding-10
+                        .list-group-item= info.title
+                        .list-group-item
+                            a.tiptext(href=info.link target='_blank')= info.link
+                                

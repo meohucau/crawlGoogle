@@ -54,6 +54,7 @@ app.post("/", urlencodedParser, async (req, res) => {
     let drugNameList = req.body.drugNameList.split("\n");
     let companyNameList = req.body.companyNameList.split("\n");
     let numberResult = req.body.numberResult;
+    let pageCount = Math.ceil(numberResult / 10);
 
     let resultList = await getData();
     
@@ -62,27 +63,36 @@ app.post("/", urlencodedParser, async (req, res) => {
     async function getData() {
         let getResultProcess = [];
         let infoList = [];
+        let linksList = [];
+        let titlesList = [];
         for (let i = 0; i < companyNameList.length; i++) {
             let queryString = companyNameList[i] + " " + drugNameList[i];
             await driver.sleep(2000);
             await driver.get('https://google.jp');
             await driver.findElement(By.xpath("//*/input[@type='text']")).sendKeys(queryString, webdriver.Key.ENTER);
-            let titleList = driver.findElements(By.xpath("//*[@id='rso']//a/h3/span"));
-            let linkList = driver.findElements(By.xpath("//*[@id='rso']//a/h3/span/parent::h3/parent::a"));
+            for (let index = 1; index <= pageCount; index++) {
+                await driver.sleep(1000);
+                let titleList = await driver.findElements(By.xpath("//*[@id='rso']//a/h3/span"));
+                let linkList = await driver.findElements(By.xpath("//*[@id='rso']//a/h3/span/parent::h3/parent::a"));
+                let titles = await map(titleList, e => e.getText())
+                .then(function (values) {
+                    return values;
+                });
+                let links = await map(linkList, e => e.getAttribute('href'))
+                    .then(function (values) {
+                        return values;
+                });
+                linksList = linksList.concat(links);
+                titlesList = titlesList.concat(titles);
+                await driver.findElement(By.xpath("//a[@aria-label='Page " + (index+1) + "']")).click();
+            }
+            // let titleList = driver.findElements(By.xpath("//*[@id='rso']//a/h3/span"));
+            // let linkList = driver.findElements(By.xpath("//*[@id='rso']//a/h3/span/parent::h3/parent::a"));
             
-            let titles = await map(titleList, e => e.getText())
-                .then(function (values) {
-                    return values;
-                });
-
-            titles = titles.slice(0, numberResult);
-            let links = await map(linkList, e => e.getAttribute('href'))
-                .then(function (values) {
-                    return values;
-                });
-            links = links.slice(0, numberResult);
+            linksList = await linksList.slice(0, numberResult);
+            titlesList = await titlesList.slice(0, numberResult);
            
-            infoList = await getInfoList(titles, links);
+            infoList = await getInfoList(titlesList, linksList);
 
             getResultProcess.push({
                 "companyName": companyNameList[i],

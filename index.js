@@ -54,11 +54,18 @@ app.post("/", urlencodedParser, async (req, res) => {
     let drugNameList = req.body.drugNameList.split("\n");
     let companyNameList = req.body.companyNameList.split("\n");
     let numberResult = req.body.numberResult;
-    let pageCount = Math.ceil(numberResult / 10);
+
+    let pageCount;
+    if (numberResult % 10 !== 0) {
+        pageCount = Math.ceil(numberResult / 10);
+    } else {
+        pageCount = numberResult / 10;
+    }
 
     let resultList = await getData();
-    
+
     //createExcel(resultList);
+
 
     async function getData() {
         let getResultProcess = [];
@@ -70,28 +77,39 @@ app.post("/", urlencodedParser, async (req, res) => {
             await driver.sleep(2000);
             await driver.get('https://google.jp');
             await driver.findElement(By.xpath("//*/input[@type='text']")).sendKeys(queryString, webdriver.Key.ENTER);
-            for (let index = 1; index <= pageCount; index++) {
+            loop2: for (let index = 1; index <= pageCount; index++) {
                 await driver.sleep(1000);
                 let titleList = await driver.findElements(By.xpath("//*[@id='rso']//a/h3/span"));
                 let linkList = await driver.findElements(By.xpath("//*[@id='rso']//a/h3/span/parent::h3/parent::a"));
+                let googlePageNum = await driver.findElements(By.xpath("//a[contains(@aria-label, 'Page')]"));
+
                 let titles = await map(titleList, e => e.getText())
-                .then(function (values) {
-                    return values;
-                });
+                    .then(function (values) {
+                        return values;
+                    });
                 let links = await map(linkList, e => e.getAttribute('href'))
                     .then(function (values) {
                         return values;
-                });
+                    });
+
                 linksList = linksList.concat(links);
                 titlesList = titlesList.concat(titles);
-                await driver.findElement(By.xpath("//a[@aria-label='Page " + (index+1) + "']")).click();
+
+
+                if (index < pageCount && index <= googlePageNum.length) {
+                    await driver.findElement(By.xpath("//a[@aria-label='Page " + (index + 1) + "']")).click();
+                }
+                else {
+                    break loop2;
+                }
             }
+
             // let titleList = driver.findElements(By.xpath("//*[@id='rso']//a/h3/span"));
             // let linkList = driver.findElements(By.xpath("//*[@id='rso']//a/h3/span/parent::h3/parent::a"));
-            
+
             linksList = await linksList.slice(0, numberResult);
             titlesList = await titlesList.slice(0, numberResult);
-           
+
             infoList = await getInfoList(titlesList, linksList);
 
             getResultProcess.push({
@@ -103,18 +121,18 @@ app.post("/", urlencodedParser, async (req, res) => {
         }
         return getResultProcess;
     }
-    
-   async function getInfoList(titles,links){
+
+    async function getInfoList(titles, links) {
         let result = []
         for (let i = 0; i < titles.length; i++) {
             result.push({
                 "title": titles[i],
                 "link": links[i]
-            }) 
+            })
         }
-        return result; 
+        return result;
     }
-        
+
 
     // function createExcel(resultList) {
     //     // You can define styles as json object
@@ -185,10 +203,10 @@ app.post("/", urlencodedParser, async (req, res) => {
 
     //     // You can then return this straight
     //     res.attachment('report.xlsx'); 
-        //return res.send(report);
-        return res.render("result", {
-            resultList: resultList
-        });//ADD HERE redirect o render
+    //return res.send(report);
+    return res.render("result", {
+        resultList: resultList
+    });//ADD HERE redirect o render
     //}
 
 

@@ -10,13 +10,13 @@ block layout-content
                 .list-group-item.w-60 Link
     each result,index in resultList
         .d-flex.result-list
-            .w-10.padding-10.font-bold= index
+            .w-10.padding-10.font-bold= index+1
             .w-15.padding-10= result.companyName
             .w-15.padding-10= result.drugName
             .w-65
-                each info in result.infoList
+                each info, subIndex in result.infoList
                     .d-flex.info.padding-10
-                        .list-group-item.w-40= info.title
+                        .list-group-item.w-40= subIndex+1 + "  " + info.title
                         .list-group-item.w-60
                             a.tiptext(href=info.link target='_blank')= info.link
                                 

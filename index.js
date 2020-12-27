@@ -13,7 +13,9 @@ var webdriver = require('selenium-webdriver'),
     By = webdriver.By,
     until = webdriver.until;
 map = webdriver.promise.map;
-const { Driver } = require("selenium-webdriver/chrome");
+const {
+    Driver
+} = require("selenium-webdriver/chrome");
 var promise = require('selenium-webdriver').promise;
 
 /**
@@ -69,19 +71,18 @@ app.post("/", urlencodedParser, async (req, res) => {
 
     async function getData() {
         let getResultProcess = [];
-        let infoList = [];
-        let linksList = [];
-        let titlesList = [];
-        for (let i = 0; i < companyNameList.length; i++) {
+        for (let i = 0; i < companyNameList.length; i++) {  
+            let infoList = [];
+            let linksList = [];
+            let titlesList = [];
             let queryString = companyNameList[i] + " " + drugNameList[i];
             await driver.sleep(2000);
             await driver.get('https://google.jp');
             await driver.findElement(By.xpath("//*/input[@type='text']")).sendKeys(queryString, webdriver.Key.ENTER);
+            let googlePageNum = await driver.findElements(By.xpath("//a[contains(@aria-label, 'Page')]"));
             loop2: for (let index = 1; index <= pageCount; index++) {
-                await driver.sleep(1000);
                 let titleList = await driver.findElements(By.xpath("//*[@id='rso']//a/h3/span"));
                 let linkList = await driver.findElements(By.xpath("//*[@id='rso']//a/h3/span/parent::h3/parent::a"));
-                let googlePageNum = await driver.findElements(By.xpath("//a[contains(@aria-label, 'Page')]"));
 
                 let titles = await map(titleList, e => e.getText())
                     .then(function (values) {
@@ -97,9 +98,12 @@ app.post("/", urlencodedParser, async (req, res) => {
 
 
                 if (index < pageCount && index <= googlePageNum.length) {
+                    await driver.sleep(2000);
+                    await driver.get('https://google.jp');
+                    await driver.findElement(By.xpath("//*/input[@type='text']")).sendKeys(queryString, webdriver.Key.ENTER);
+                    await driver.sleep(2000);
                     await driver.findElement(By.xpath("//a[@aria-label='Page " + (index + 1) + "']")).click();
-                }
-                else {
+                } else {
                     break loop2;
                 }
             }
@@ -206,7 +210,7 @@ app.post("/", urlencodedParser, async (req, res) => {
     //return res.send(report);
     return res.render("result", {
         resultList: resultList
-    });//ADD HERE redirect o render
+    }); //ADD HERE redirect o render
     //}
 
 

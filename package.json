@@ -2,10 +2,11 @@
   "name": "yakuzai",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "googleSheet.js",
   "scripts": {
     "dev": "nodemon --inspect ./index.js",
-    "ui": "browser-sync start --inspect --config bs-config.js"
+    "ui": "browser-sync start --inspect --config bs-config.js",
+    "start": "nodemon ./googleSheet.js"
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +19,7 @@
     "chromedriver": "^87.0.2",
     "express": "^4.17.1",
     "google-it": "^1.5.4",
+    "google-spreadsheet": "^3.1.15",
     "node-excel-export": "^1.4.4",
     "pug": "^3.0.0",
     "selenium-webdriver": "^4.0.0-alpha.8",

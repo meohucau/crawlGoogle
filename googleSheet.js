@@ -1,55 +1,57 @@
-const {
-    GoogleSpreadsheet
-} = require('google-spreadsheet');
-const {
-    promisify
-} = require('util');
-const creds = require('./kouenkai-b0c912fdac26.json');
+const {GoogleSpreadsheet} = require('google-spreadsheet');
+require('dotenv').config();
 require("chromedriver");
 var webdriver = require('selenium-webdriver'),
-    By = webdriver.By,
-    until = webdriver.until;
-map = webdriver.promise.map;
-const {
-    Driver
-} = require("selenium-webdriver/chrome");
-const {
-    stringify
-} = require('querystring');
-var promise = require('selenium-webdriver').promise;
+    By = webdriver.By
+    map = webdriver.promise.map;
+
+const chromeCapabilities = webdriver.Capabilities.chrome();
+const chromeArgs = [
+    '--disable-infobars',
+    '--ignore-ssl-errors=yes',    
+    '--ignore-certificate-errors',
+    '--headless'
+];
+const chromeOptions = {
+    args: chromeArgs,
+    excludeSwitches: ['enable-logging'],
+};
+chromeCapabilities.set('chromeOptions', chromeOptions);
 
 var driver = new webdriver.Builder()
     .forBrowser('chrome')
+    .withCapabilities(chromeCapabilities)
     .build();
 
+const creds = require(process.env.CREDS_PATH);
 const ACTION = {
-    CLICK: "クリック",
-    GET_ALL: "すべて内容取得",
-    GET_PDF_LINK: "PDFリンク取得",
-    GET_TITLE: "タイトル取得",
-    GET_TIME: "時間取得",
-    GET_IMAGE: "画像取得"
+    CLICK: "Click",
+    GET_ALL: "Get All Content",
+    GET_PDF_LINK: "Get Link PDF",
+    GET_TITLE: "Get Title",
+    GET_TIME: "Get Time",
+    GET_IMAGE: "Get Image"
 }
 var insertList = [];
-
 async function accessSpreadSheet() {
-    const doc = new GoogleSpreadsheet('1g-DBN4YyHrnAMnkWR3MY6r8datq5-Ar6c3wOfpDo4iA');
+    const doc = new GoogleSpreadsheet(process.env.SHEET_ID);
     await doc.useServiceAccountAuth(creds);
+    console.log("Load sheet done!");
     await doc.loadInfo(); // loads document properties and worksheets
-    const sheet = doc.sheetsByTitle['Sheet1'];
-    // const sheet2 = await doc.addSheet({ headerValues: ['name', 'email'] });
-    // const larryRow = await sheet.addRow({ 会社名: 'Larry Page', タイトル: 'larry@google.com' });
-    // const moreRows = await sheet.addRows([
-    // { 会社名: 'Sergey Brin', タイトル: 'sergey@google.com' },
-    // { 会社名: 'Eric Schmidt', タイトル: 'eric@google.com' },
-    // ]);
-    const sheet2 = doc.sheetsByTitle['Sheet2'];
+    const sheet = doc.sheetsByTitle[process.env.ROBOT_SHEET_NAME];
+    console.log("Get robot sheet done!");
+    const sheet2 = doc.sheetsByTitle[process.env.RESULT_SHEET_NAME];
+    console.log("Get result sheet done!");
     await sheet2.clear();
+    console.log("Clear result sheet done!");
     sheet2.setHeaderRow(["companyName", "title", "time", "content", "pdfLink", "imageLink"]);
 
+    var robotCount = 0;
     const robotList = await sheet.getRows();
 
     for (const key in robotList) {
+        ++robotCount;
+        console.log(`Robot ${robotCount}: ${robotList[key].Name}`);
         let stepCount = 1;
         let titleList = [];
         let timeList = [];
@@ -77,9 +79,9 @@ async function accessSpreadSheet() {
                     case ACTION.GET_PDF_LINK:
                         pdfLinkList = await getLink(robotList[key][xpath]);
                         break;
-                        case ACTION.GET_IMAGE:
-                            imageLinkList = await getImage(robotList[key][xpath]);
-                            break;
+                    case ACTION.GET_IMAGE:
+                        imageLinkList = await getImage(robotList[key][xpath]);
+                        break;
                     default:
                         break;
                 }
@@ -88,7 +90,7 @@ async function accessSpreadSheet() {
                 break;
             }
         }
-        if(titleList.length > 0) {
+        if (titleList.length > 0) {
             for (let i = 0; i < titleList.length; i++) {
                 insertList.push({
                     companyName: robotList[key].Name,
@@ -100,44 +102,15 @@ async function accessSpreadSheet() {
                 })
             }
             await sheet2.addRows(insertList);
+            console.log(`Robot ${robotCount}: ${robotList[key].Name} done!`, "\n");
+        }else {
+            consol.log(`Robot ${robotCount}: ${robotList[key].Name} doesn't has new data`, "\n")
         }
-        
+
     }
+    console.log("All robot done!")
 }
 
-// await driver.get(robotList[0].URL);
-// await driver.findElement(By.xpath(robotList[0].Xpath1)).click();
-
-
-// let titleList = await driver.findElements(By.xpath(robotList[0].Xpath2));
-
-// let titles = await map(titleList, e => e.getText())
-//     .then(function (values) {
-//         return values;
-//     });
-
-// let otherList = await driver.findElements(By.xpath(robotList[0].Xpath3));
-
-// let others = await map(otherList, e => e.getText())
-//     .then(function (values) {
-//         return values;
-//     });
-
-// let sheet2 = doc.sheetsByTitle['Sheet2'];
-// for (let index = 0; index < titles.length; index++) {
-//     const addRow = await sheet2.addRow({
-//         タイトル: titles[index],
-//         内容: others[index]
-//     })
-// }
-
-
-// rows[1].会社名 = 'hehehe';
-// await rows[1].save();
-// await rows[1].delete();
-// const sheet = info.worksheets[0];
-// console.log(`Title: ${sheet.title}, Rows: ${sheet.rowCount} `)
-// }
 
 async function getValue(xpath) {
     let resultList = await driver.findElements(By.xpath(xpath));

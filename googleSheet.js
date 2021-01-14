@@ -1,14 +1,14 @@
-const {GoogleSpreadsheet} = require('google-spreadsheet');
+const { GoogleSpreadsheet } = require('google-spreadsheet');
 require('dotenv').config();
 require("chromedriver");
 var webdriver = require('selenium-webdriver'),
     By = webdriver.By
-    map = webdriver.promise.map;
+map = webdriver.promise.map;
 
 const chromeCapabilities = webdriver.Capabilities.chrome();
 const chromeArgs = [
     '--disable-infobars',
-    '--ignore-ssl-errors=yes',    
+    '--ignore-ssl-errors=yes',
     '--ignore-certificate-errors',
     '--headless'
 ];
@@ -27,10 +27,12 @@ const creds = require(process.env.CREDS_PATH);
 const ACTION = {
     CLICK: "Click",
     GET_ALL: "Get All Content",
-    GET_PDF_LINK: "Get Link PDF",
+    GET_PDF_LINK: "Get PDF Link",
     GET_TITLE: "Get Title",
     GET_TIME: "Get Time",
-    GET_IMAGE: "Get Image"
+    GET_IMAGE: "Get Image",
+    GET_DETAIL_LINK: "Get Detail Link",
+    GET_OTHER: "Get Other",
 }
 var insertList = [];
 async function accessSpreadSheet() {
@@ -44,7 +46,7 @@ async function accessSpreadSheet() {
     console.log("Get result sheet done!");
     await sheet2.clear();
     console.log("Clear result sheet done!");
-    sheet2.setHeaderRow(["companyName", "title", "time", "content", "pdfLink", "imageLink"]);
+    sheet2.setHeaderRow(["companyName", "title", "time", "content", "pdfLink", "imageLink", "detailLink", "other"]);
 
     var robotCount = 0;
     const robotList = await sheet.getRows();
@@ -58,8 +60,10 @@ async function accessSpreadSheet() {
         let contentList = [];
         let pdfLinkList = [];
         let imageLinkList = [];
+        let detailLinkList = [];
+        let otherList = [];
         await driver.get(robotList[key].URL);
-        for (let index = 1; index <= 10; index++) {
+        for (let index = 1; index <= 15; index++) {
             let xpath = `Xpath${stepCount}`;
             let action = `Action${stepCount}`;
             if (robotList[key][xpath] && robotList[key][action]) {
@@ -82,10 +86,16 @@ async function accessSpreadSheet() {
                     case ACTION.GET_IMAGE:
                         imageLinkList = await getImage(robotList[key][xpath]);
                         break;
+                    case ACTION.GET_DETAIL_LINK:
+                        detailLinkList = await getLink(robotList[key][xpath]);
+                        break;
+                    case ACTION.GET_OTHER:
+                        otherList = await getValue(robotList[key][xpath]);
+                        break;
                     default:
                         break;
                 }
-                ++stepCount;
+                    ++stepCount;
             } else {
                 break;
             }
@@ -98,13 +108,15 @@ async function accessSpreadSheet() {
                     time: timeList[i],
                     content: contentList[i],
                     pdfLink: pdfLinkList[i],
-                    imageLink: imageLinkList[i]
+                    imageLink: imageLinkList[i],
+                    detailLink: detailLinkList[i],
+                    other: otherList[i]
                 })
             }
             await sheet2.addRows(insertList);
             console.log(`Robot ${robotCount}: ${robotList[key].Name} done!`, "\n");
-        }else {
-            consol.log(`Robot ${robotCount}: ${robotList[key].Name} doesn't has new data`, "\n")
+        } else {
+            console.log(`Robot ${robotCount}: ${robotList[key].Name} doesn't has new data`, "\n")
         }
 
     }
@@ -141,6 +153,5 @@ async function getImage(xpath) {
 
     return results;
 }
-
 
 accessSpreadSheet();

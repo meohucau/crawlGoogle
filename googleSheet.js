@@ -1,4 +1,6 @@
-const { GoogleSpreadsheet } = require('google-spreadsheet');
+const {
+    GoogleSpreadsheet
+} = require('google-spreadsheet');
 require('dotenv').config();
 require("chromedriver");
 var webdriver = require('selenium-webdriver'),
@@ -22,7 +24,7 @@ var driver = new webdriver.Builder()
     .forBrowser('chrome')
     .withCapabilities(chromeCapabilities)
     .build();
-
+driver.manage().window().maximize();
 const creds = require(process.env.CREDS_PATH);
 const ACTION = {
     CLICK: "Click",
@@ -33,6 +35,8 @@ const ACTION = {
     GET_IMAGE: "Get Image",
     GET_DETAIL_LINK: "Get Detail Link",
     GET_OTHER: "Get Other",
+    DISPLAY_HIDE_ELEMENT: "Display Hide Element",
+    NEXT_PAGE: "Next Page"
 }
 var insertList = [];
 async function accessSpreadSheet() {
@@ -66,36 +70,52 @@ async function accessSpreadSheet() {
         for (let index = 1; index <= 15; index++) {
             let xpath = `Xpath${stepCount}`;
             let action = `Action${stepCount}`;
+            let temp = [];
             if (robotList[key][xpath] && robotList[key][action]) {
                 switch (robotList[key][action]) {
                     case ACTION.CLICK:
                         await driver.findElement(By.xpath(robotList[key][xpath])).click();
+                        await driver.sleep(3000);
+                        break;
+                    case ACTION.NEXT_PAGE:
+                        await driver.findElement(By.xpath(robotList[key][xpath])).click();
+                        await driver.sleep(3000);
                         break;
                     case ACTION.GET_ALL:
-                        contentList = await getValue(robotList[key][xpath]);
+                        temp = await getValue(robotList[key][xpath]);
+                        contentList = contentList.concat(temp);
                         break;
                     case ACTION.GET_TITLE:
-                        titleList = await getValue(robotList[key][xpath]);
+                        temp = await getValue(robotList[key][xpath]);
+                        titleList = titleList.concat(temp);
                         break;
                     case ACTION.GET_TIME:
-                        timeList = await getValue(robotList[key][xpath]);
+                        temp = await getValue(robotList[key][xpath]);
+                        timeList = timeList.concat(temp);
                         break;
                     case ACTION.GET_PDF_LINK:
-                        pdfLinkList = await getLink(robotList[key][xpath]);
+                        temp = await getLink(robotList[key][xpath]);
+                        pdfLinkList = pdfLinkList.concat(temp);
                         break;
                     case ACTION.GET_IMAGE:
-                        imageLinkList = await getImage(robotList[key][xpath]);
+                        temp = await getImage(robotList[key][xpath]);
+                        imageLinkList = imageLinkList.concat(temp);
                         break;
                     case ACTION.GET_DETAIL_LINK:
-                        detailLinkList = await getLink(robotList[key][xpath]);
+                        temp = await getLink(robotList[key][xpath]);
+                        detailLinkList = detailLinkList.concat(temp);
                         break;
                     case ACTION.GET_OTHER:
-                        otherList = await getValue(robotList[key][xpath]);
+                        temp = await getValue(robotList[key][xpath]);
+                        otherList = otherList.concat(temp);
+                        break;
+                    case ACTION.DISPLAY_HIDE_ELEMENT:
+                        await displayHideElement(robotList[key][xpath]);
                         break;
                     default:
                         break;
                 }
-                    ++stepCount;
+                ++stepCount;
             } else {
                 break;
             }
@@ -126,12 +146,22 @@ async function accessSpreadSheet() {
 
 async function getValue(xpath) {
     let resultList = await driver.findElements(By.xpath(xpath));
-    let results = await map(resultList, e => e.getText())
+    let results = await map(resultList, async e => {
+            await driver.executeScript("arguments[0].style.display = 'block';", e)
+            return e.getText();
+        })
         .then(function (values) {
             return values;
         });
 
     return results;
+}
+
+async function displayHideElement(xpath) {
+    let resultList = await driver.findElements(By.xpath(xpath));
+    resultList.forEach(async element => {
+        await driver.executeScript("arguments[0].style.display = 'block';", element)
+    })
 }
 
 async function getLink(xpath) {

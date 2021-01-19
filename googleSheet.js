@@ -39,7 +39,8 @@ const ACTION = {
     NEXT_PAGE: "Next Page",
     CLOSE_FRAME: "Close Frame",
     SWITCH_TO_FRAME: "Switch To Frame",
-    SWITH_TO_MAIN: "Switch To Main"
+    SWITH_TO_MAIN: "Switch To Main",
+    LOOP: "Loop"
 }
 var insertList = [];
 async function accessSpreadSheet() {
@@ -75,6 +76,23 @@ async function accessSpreadSheet() {
             let action = `Action${stepCount}`;
             let temp = [];
             if (robotList[key][xpath] && robotList[key][action]) {
+                if (robotList[key][action] == ACTION.LOOP) {
+                    let arrStep = robotList[key][xpath].split('-');
+                    for (let loop = 0; loop < Number(arrStep[2]); loop++) {
+                        for (let i = Number(arrStep[0]); i <= Number(arrStep[1]); i++) {
+                             xpath = `Xpath${i}`;
+                             action = `Action${i}`;
+                             await doAction();
+                        }
+                    }
+                } else {
+                    await doAction();
+                }
+                ++stepCount;
+            } else {
+                break;
+            }
+            async function doAction() {
                 switch (robotList[key][action]) {
                     case ACTION.CLICK:
                         await driver.findElement(By.xpath(robotList[key][xpath])).click();
@@ -128,9 +146,6 @@ async function accessSpreadSheet() {
                     default:
                         break;
                 }
-                ++stepCount;
-            } else {
-                break;
             }
         }
         if (titleList.length > 0) {
@@ -154,7 +169,7 @@ async function accessSpreadSheet() {
 
     }
     console.log("All robot done!");
-    await driver.quit();
+    // await driver.quit();
 }
 
 

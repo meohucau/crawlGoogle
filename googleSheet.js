@@ -36,7 +36,8 @@ const ACTION = {
     GET_DETAIL_LINK: "Get Detail Link",
     GET_OTHER: "Get Other",
     DISPLAY_HIDE_ELEMENT: "Display Hide Element",
-    NEXT_PAGE: "Next Page"
+    NEXT_PAGE: "Next Page",
+    CLOSE_FRAME: "Close Frame"
 }
 var insertList = [];
 async function accessSpreadSheet() {
@@ -112,6 +113,9 @@ async function accessSpreadSheet() {
                     case ACTION.DISPLAY_HIDE_ELEMENT:
                         await displayHideElement(robotList[key][xpath]);
                         break;
+                    case ACTION.CLOSE_FRAME:
+                        await closeFrame(robotList[key][xpath]);
+                        break;
                     default:
                         break;
                 }
@@ -163,6 +167,11 @@ async function displayHideElement(xpath) {
     resultList.forEach(async element => {
         await driver.executeScript("arguments[0].style.display = 'block';", element)
     })
+}
+
+async function closeFrame(xpath) {
+    let element = await driver.findElement(By.xpath(xpath));
+    await driver.executeScript("arguments[0].style.display = 'none';", element)
 }
 
 async function getLink(xpath) {

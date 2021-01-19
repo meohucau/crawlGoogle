@@ -37,7 +37,9 @@ const ACTION = {
     GET_OTHER: "Get Other",
     DISPLAY_HIDE_ELEMENT: "Display Hide Element",
     NEXT_PAGE: "Next Page",
-    CLOSE_FRAME: "Close Frame"
+    CLOSE_FRAME: "Close Frame",
+    SWITCH_TO_FRAME: "Switch To Frame",
+    SWITH_TO_MAIN: "Switch To Main"
 }
 var insertList = [];
 async function accessSpreadSheet() {
@@ -115,6 +117,13 @@ async function accessSpreadSheet() {
                         break;
                     case ACTION.CLOSE_FRAME:
                         await closeFrame(robotList[key][xpath]);
+                        break;
+                    case ACTION.SWITCH_TO_FRAME:
+                        let frame = await driver.findElement(By.xpath(robotList[key][xpath]));
+                        await driver.switchTo().frame(frame);
+                        break;
+                    case ACTION.SWITH_TO_MAIN:
+                        await driver.switchTo().defaultContent();
                         break;
                     default:
                         break;

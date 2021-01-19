@@ -58,10 +58,7 @@ async function accessSpreadSheet() {
 
     var robotCount = 0;
     const robotList = await sheet.getRows();
-
     for (const key in robotList) {
-        ++robotCount;
-        console.log(`Robot ${robotCount}: ${robotList[key].Name}`);
         let stepCount = 1;
         let titleList = [];
         let timeList = [];
@@ -70,103 +67,107 @@ async function accessSpreadSheet() {
         let imageLinkList = [];
         let detailLinkList = [];
         let otherList = [];
-        await driver.get(robotList[key].URL);
-        for (let index = 1; index <= 15; index++) {
-            let xpath = `Xpath${stepCount}`;
-            let action = `Action${stepCount}`;
-            let temp = [];
-            if (robotList[key][xpath] && robotList[key][action]) {
-                if (robotList[key][action] == ACTION.LOOP) {
-                    let arrStep = robotList[key][xpath].split('-');
-                    for (let loop = 0; loop < Number(arrStep[2]); loop++) {
-                        for (let i = Number(arrStep[0]); i <= Number(arrStep[1]); i++) {
-                             xpath = `Xpath${i}`;
-                             action = `Action${i}`;
-                             await doAction();
+        let robotURL = robotList[key].URL;
+        if (robotList[key].URL !== undefined &&  robotList[key].URL !== null && robotList[key].URL !== '') {
+            ++robotCount;
+            console.log(`Robot ${robotCount}: ${robotList[key].Name}`);
+            await driver.get(robotList[key].URL);
+            for (let index = 1; index <= 15; index++) {
+                let xpath = `Xpath${stepCount}`;
+                let action = `Action${stepCount}`;
+                let temp = [];
+                if (robotList[key][xpath] && robotList[key][action]) {
+                    if (robotList[key][action] == ACTION.LOOP) {
+                        let arrStep = robotList[key][xpath].split('-');
+                        for (let loop = 0; loop < Number(arrStep[2]); loop++) {
+                            for (let i = Number(arrStep[0]); i <= Number(arrStep[1]); i++) {
+                                xpath = `Xpath${i}`;
+                                action = `Action${i}`;
+                                await doAction();
+                            }
                         }
+                    } else {
+                        await doAction();
                     }
+                    ++stepCount;
                 } else {
-                    await doAction();
+                    break;
                 }
-                ++stepCount;
+                async function doAction() {
+                    switch (robotList[key][action]) {
+                        case ACTION.CLICK:
+                            await driver.findElement(By.xpath(robotList[key][xpath])).click();
+                            await driver.sleep(3000);
+                            break;
+                        case ACTION.NEXT_PAGE:
+                            await driver.findElement(By.xpath(robotList[key][xpath])).click();
+                            await driver.sleep(3000);
+                            break;
+                        case ACTION.GET_ALL:
+                            temp = await getValue(robotList[key][xpath]);
+                            contentList = contentList.concat(temp);
+                            break;
+                        case ACTION.GET_TITLE:
+                            temp = await getValue(robotList[key][xpath]);
+                            titleList = titleList.concat(temp);
+                            break;
+                        case ACTION.GET_TIME:
+                            temp = await getValue(robotList[key][xpath]);
+                            timeList = timeList.concat(temp);
+                            break;
+                        case ACTION.GET_PDF_LINK:
+                            temp = await getLink(robotList[key][xpath]);
+                            pdfLinkList = pdfLinkList.concat(temp);
+                            break;
+                        case ACTION.GET_IMAGE:
+                            temp = await getImage(robotList[key][xpath]);
+                            imageLinkList = imageLinkList.concat(temp);
+                            break;
+                        case ACTION.GET_DETAIL_LINK:
+                            temp = await getLink(robotList[key][xpath]);
+                            detailLinkList = detailLinkList.concat(temp);
+                            break;
+                        case ACTION.GET_OTHER:
+                            temp = await getValue(robotList[key][xpath]);
+                            otherList = otherList.concat(temp);
+                            break;
+                        case ACTION.DISPLAY_HIDE_ELEMENT:
+                            await displayHideElement(robotList[key][xpath]);
+                            break;
+                        case ACTION.CLOSE_FRAME:
+                            await closeFrame(robotList[key][xpath]);
+                            break;
+                        case ACTION.SWITCH_TO_FRAME:
+                            let frame = await driver.findElement(By.xpath(robotList[key][xpath]));
+                            await driver.switchTo().frame(frame);
+                            break;
+                        case ACTION.SWITH_TO_MAIN:
+                            await driver.switchTo().defaultContent();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            if (titleList.length > 0) {
+                for (let i = 0; i < titleList.length; i++) {
+                    insertList.push({
+                        companyName: robotList[key].Name,
+                        title: titleList[i],
+                        time: timeList[i],
+                        content: contentList[i],
+                        pdfLink: pdfLinkList[i],
+                        imageLink: imageLinkList[i],
+                        detailLink: detailLinkList[i],
+                        other: otherList[i]
+                    })
+                }
+                await sheet2.addRows(insertList);
+                console.log(`Robot ${robotCount}: ${robotList[key].Name} done!`, "\n");
             } else {
-                break;
-            }
-            async function doAction() {
-                switch (robotList[key][action]) {
-                    case ACTION.CLICK:
-                        await driver.findElement(By.xpath(robotList[key][xpath])).click();
-                        await driver.sleep(3000);
-                        break;
-                    case ACTION.NEXT_PAGE:
-                        await driver.findElement(By.xpath(robotList[key][xpath])).click();
-                        await driver.sleep(3000);
-                        break;
-                    case ACTION.GET_ALL:
-                        temp = await getValue(robotList[key][xpath]);
-                        contentList = contentList.concat(temp);
-                        break;
-                    case ACTION.GET_TITLE:
-                        temp = await getValue(robotList[key][xpath]);
-                        titleList = titleList.concat(temp);
-                        break;
-                    case ACTION.GET_TIME:
-                        temp = await getValue(robotList[key][xpath]);
-                        timeList = timeList.concat(temp);
-                        break;
-                    case ACTION.GET_PDF_LINK:
-                        temp = await getLink(robotList[key][xpath]);
-                        pdfLinkList = pdfLinkList.concat(temp);
-                        break;
-                    case ACTION.GET_IMAGE:
-                        temp = await getImage(robotList[key][xpath]);
-                        imageLinkList = imageLinkList.concat(temp);
-                        break;
-                    case ACTION.GET_DETAIL_LINK:
-                        temp = await getLink(robotList[key][xpath]);
-                        detailLinkList = detailLinkList.concat(temp);
-                        break;
-                    case ACTION.GET_OTHER:
-                        temp = await getValue(robotList[key][xpath]);
-                        otherList = otherList.concat(temp);
-                        break;
-                    case ACTION.DISPLAY_HIDE_ELEMENT:
-                        await displayHideElement(robotList[key][xpath]);
-                        break;
-                    case ACTION.CLOSE_FRAME:
-                        await closeFrame(robotList[key][xpath]);
-                        break;
-                    case ACTION.SWITCH_TO_FRAME:
-                        let frame = await driver.findElement(By.xpath(robotList[key][xpath]));
-                        await driver.switchTo().frame(frame);
-                        break;
-                    case ACTION.SWITH_TO_MAIN:
-                        await driver.switchTo().defaultContent();
-                        break;
-                    default:
-                        break;
-                }
+                console.log(`Robot ${robotCount}: ${robotList[key].Name} doesn't has new data`, "\n")
             }
         }
-        if (titleList.length > 0) {
-            for (let i = 0; i < titleList.length; i++) {
-                insertList.push({
-                    companyName: robotList[key].Name,
-                    title: titleList[i],
-                    time: timeList[i],
-                    content: contentList[i],
-                    pdfLink: pdfLinkList[i],
-                    imageLink: imageLinkList[i],
-                    detailLink: detailLinkList[i],
-                    other: otherList[i]
-                })
-            }
-            await sheet2.addRows(insertList);
-            console.log(`Robot ${robotCount}: ${robotList[key].Name} done!`, "\n");
-        } else {
-            console.log(`Robot ${robotCount}: ${robotList[key].Name} doesn't has new data`, "\n")
-        }
-
     }
     console.log("All robot done!");
     // await driver.quit();

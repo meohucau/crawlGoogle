@@ -68,7 +68,7 @@ async function accessSpreadSheet() {
         let detailLinkList = [];
         let otherList = [];
         let robotURL = robotList[key].URL;
-        if (robotList[key].URL !== undefined &&  robotList[key].URL !== null && robotList[key].URL !== '') {
+        if (robotList[key].URL !== undefined && robotList[key].URL !== null && robotList[key].URL !== '') {
             ++robotCount;
             console.log(`Robot ${robotCount}: ${robotList[key].Name}`);
             await driver.get(robotList[key].URL);
@@ -96,12 +96,18 @@ async function accessSpreadSheet() {
                 async function doAction() {
                     switch (robotList[key][action]) {
                         case ACTION.CLICK:
+                            await driver.sleep(1000);
+                            await waitPageLoad();
                             await driver.findElement(By.xpath(robotList[key][xpath])).click();
-                            await driver.sleep(3000);
+                            await driver.sleep(1000);
+                            await waitPageLoad();
                             break;
                         case ACTION.NEXT_PAGE:
+                            await driver.sleep(1000);
+                            await waitPageLoad();
                             await driver.findElement(By.xpath(robotList[key][xpath])).click();
-                            await driver.sleep(3000);
+                            await driver.sleep(1000);
+                            await waitPageLoad();
                             break;
                         case ACTION.GET_ALL:
                             temp = await getValue(robotList[key][xpath]);
@@ -173,6 +179,13 @@ async function accessSpreadSheet() {
     // await driver.quit();
 }
 
+async function waitPageLoad() {
+    driver.wait(function () {
+        return driver.executeScript('return document.readyState').then(function (readyState) {
+            return readyState === 'complete';
+        });
+    });
+}
 
 async function getValue(xpath) {
     let resultList = await driver.findElements(By.xpath(xpath));

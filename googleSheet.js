@@ -140,7 +140,8 @@ async function accessSpreadSheet() {
         }
 
     }
-    console.log("All robot done!")
+    console.log("All robot done!");
+    await driver.quit();
 }
 
 

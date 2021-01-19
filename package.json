@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --inspect ./index.js",
     "ui": "browser-sync start --inspect --config bs-config.js",
-    "start": "nodemon ./googleSheet.js"
+    "start": "node ./googleSheet.js"
   },
   "author": "",
   "license": "ISC",

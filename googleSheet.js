@@ -40,7 +40,8 @@ const ACTION = {
     CLOSE_FRAME: "Close Frame",
     SWITCH_TO_FRAME: "Switch To Frame",
     SWITH_TO_MAIN: "Switch To Main",
-    LOOP: "Loop"
+    LOOP: "Loop",
+    SWITCH_TAB: "Switch Tab"
 }
 var insertList = [];
 async function accessSpreadSheet() {
@@ -96,17 +97,17 @@ async function accessSpreadSheet() {
                 async function doAction() {
                     switch (robotList[key][action]) {
                         case ACTION.CLICK:
-                            await driver.sleep(1000);
+                            await driver.sleep(2000);
                             await waitPageLoad();
                             await driver.findElement(By.xpath(robotList[key][xpath])).click();
-                            await driver.sleep(1000);
+                            await driver.sleep(2000);
                             await waitPageLoad();
                             break;
                         case ACTION.NEXT_PAGE:
-                            await driver.sleep(1000);
+                            await driver.sleep(2000);
                             await waitPageLoad();
                             await driver.findElement(By.xpath(robotList[key][xpath])).click();
-                            await driver.sleep(1000);
+                            await driver.sleep(2000);
                             await waitPageLoad();
                             break;
                         case ACTION.GET_ALL:
@@ -149,6 +150,10 @@ async function accessSpreadSheet() {
                             break;
                         case ACTION.SWITH_TO_MAIN:
                             await driver.switchTo().defaultContent();
+                            break;
+                        case ACTION.SWITCH_TAB:
+                            let windowHandles = await driver.getAllWindowHandles();
+                            await driver.switchTo().window(windowHandles[1]);
                             break;
                         default:
                             break;

@@ -68,7 +68,6 @@ async function accessSpreadSheet() {
         let imageLinkList = [];
         let detailLinkList = [];
         let otherList = [];
-        let robotURL = robotList[key].URL;
         if (robotList[key].URL !== undefined && robotList[key].URL !== null && robotList[key].URL !== '') {
             ++robotCount;
             console.log(`Robot ${robotCount}: ${robotList[key].Name}`);
@@ -76,9 +75,9 @@ async function accessSpreadSheet() {
             for (let index = 1; index <= 15; index++) {
                 let xpath = `Xpath${stepCount}`;
                 let action = `Action${stepCount}`;
-                let temp = [];
+                let temp = []; 
                 if (robotList[key][xpath] && robotList[key][action]) {
-                    if (robotList[key][action] == ACTION.LOOP) {
+                    if (robotList[key][action] === ACTION.LOOP) {
                         let arrStep = robotList[key][xpath].split('-');
                         for (let loop = 0; loop < Number(arrStep[2]); loop++) {
                             for (let i = Number(arrStep[0]); i <= Number(arrStep[1]); i++) {
@@ -98,6 +97,7 @@ async function accessSpreadSheet() {
                     switch (robotList[key][action]) {
                         case ACTION.CLICK:
                             await driver.sleep(2000);
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             await waitPageLoad();
                             await driver.findElement(By.xpath(robotList[key][xpath])).click();
                             await driver.sleep(2000);
@@ -111,40 +111,50 @@ async function accessSpreadSheet() {
                             await waitPageLoad();
                             break;
                         case ACTION.GET_ALL:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             temp = await getValue(robotList[key][xpath]);
                             contentList = contentList.concat(temp);
                             break;
                         case ACTION.GET_TITLE:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             temp = await getValue(robotList[key][xpath]);
                             titleList = titleList.concat(temp);
                             break;
                         case ACTION.GET_TIME:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             temp = await getValue(robotList[key][xpath]);
                             timeList = timeList.concat(temp);
                             break;
                         case ACTION.GET_PDF_LINK:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             temp = await getLink(robotList[key][xpath]);
                             pdfLinkList = pdfLinkList.concat(temp);
                             break;
                         case ACTION.GET_IMAGE:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             temp = await getImage(robotList[key][xpath]);
                             imageLinkList = imageLinkList.concat(temp);
                             break;
                         case ACTION.GET_DETAIL_LINK:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             temp = await getLink(robotList[key][xpath]);
                             detailLinkList = detailLinkList.concat(temp);
                             break;
                         case ACTION.GET_OTHER:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             temp = await getValue(robotList[key][xpath]);
                             otherList = otherList.concat(temp);
                             break;
                         case ACTION.DISPLAY_HIDE_ELEMENT:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             await displayHideElement(robotList[key][xpath]);
                             break;
                         case ACTION.CLOSE_FRAME:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             await closeFrame(robotList[key][xpath]);
                             break;
                         case ACTION.SWITCH_TO_FRAME:
+                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             let frame = await driver.findElement(By.xpath(robotList[key][xpath]));
                             await driver.switchTo().frame(frame);
                             break;
@@ -174,6 +184,7 @@ async function accessSpreadSheet() {
                     })
                 }
                 await sheet2.addRows(insertList);
+                insertList = [];
                 console.log(`Robot ${robotCount}: ${robotList[key].Name} done!`, "\n");
             } else {
                 console.log(`Robot ${robotCount}: ${robotList[key].Name} doesn't has new data`, "\n")

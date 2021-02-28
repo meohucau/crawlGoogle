@@ -1,48 +1,20 @@
 const {
     GoogleSpreadsheet
 } = require('google-spreadsheet');
-require('dotenv').config();
-require("chromedriver");
 var webdriver = require('selenium-webdriver'),
     By = webdriver.By
 map = webdriver.promise.map;
+require('dotenv').config();
+const {
+    ACTION
+} = require('./constants/action');
+const {
+    HEADER
+} = require('./constants/header');
+const seleniumAction = require('./function/seleniumAction');
+const driver = seleniumAction.driver;
 
-const chromeCapabilities = webdriver.Capabilities.chrome();
-const chromeArgs = [
-    '--disable-infobars',
-    '--ignore-ssl-errors=yes',
-    '--ignore-certificate-errors',
-    '--headless'
-];
-const chromeOptions = {
-    args: chromeArgs,
-    excludeSwitches: ['enable-logging'],
-};
-chromeCapabilities.set('chromeOptions', chromeOptions);
-
-var driver = new webdriver.Builder()
-    .forBrowser('chrome')
-    .withCapabilities(chromeCapabilities)
-    .build();
-driver.manage().window().maximize();
 const creds = require(process.env.CREDS_PATH);
-const ACTION = {
-    CLICK: "Click",
-    GET_ALL: "Get All Content",
-    GET_PDF_LINK: "Get PDF Link",
-    GET_TITLE: "Get Title",
-    GET_TIME: "Get Time",
-    GET_IMAGE: "Get Image",
-    GET_DETAIL_LINK: "Get Detail Link",
-    GET_OTHER: "Get Other",
-    DISPLAY_HIDE_ELEMENT: "Display Hide Element",
-    NEXT_PAGE: "Next Page",
-    CLOSE_FRAME: "Close Frame",
-    SWITCH_TO_FRAME: "Switch To Frame",
-    SWITH_TO_MAIN: "Switch To Main",
-    LOOP: "Loop",
-    SWITCH_TAB: "Switch Tab"
-}
 var insertList = [];
 async function accessSpreadSheet() {
     const doc = new GoogleSpreadsheet(process.env.SHEET_ID);
@@ -55,7 +27,7 @@ async function accessSpreadSheet() {
     console.log("Get result sheet done!");
     await sheet2.clear();
     console.log("Clear result sheet done!");
-    sheet2.setHeaderRow(["companyName", "title", "time", "content", "pdfLink", "imageLink", "detailLink", "other"]);
+    sheet2.setHeaderRow(HEADER);
 
     var robotCount = 0;
     const robotList = await sheet.getRows();
@@ -68,14 +40,16 @@ async function accessSpreadSheet() {
         let imageLinkList = [];
         let detailLinkList = [];
         let otherList = [];
+        let elementList = [];
         if (robotList[key].URL !== undefined && robotList[key].URL !== null && robotList[key].URL !== '') {
             ++robotCount;
             console.log(`Robot ${robotCount}: ${robotList[key].Name}`);
             await driver.get(robotList[key].URL);
+            await seleniumAction.waitPageLoad();
             for (let index = 1; index <= 15; index++) {
                 let xpath = `Xpath${stepCount}`;
                 let action = `Action${stepCount}`;
-                let temp = []; 
+                let temp = [];
                 if (robotList[key][xpath] && robotList[key][action]) {
                     if (robotList[key][action] === ACTION.LOOP) {
                         let arrStep = robotList[key][xpath].split('-');
@@ -86,6 +60,18 @@ async function accessSpreadSheet() {
                                 await doAction();
                             }
                         }
+                    } else if (robotList[key][action] === ACTION.FOR_EACH_ELEMENT) {
+                        elementList = await driver.findElements(By.xpath(robotList[key][xpath]));
+                        let arrStep = robotList[key]['StepForEach'].split('-');
+                        for (let loop = 1; loop <= elementList.length; loop++) {
+                            for (let i = Number(arrStep[0]); i <= Number(arrStep[1]); i++) {
+                                xpath = `Xpath${i}`;
+                                let xpathText = robotList[key][xpath].replace('variable', String(loop));
+                                action = `Action${i}`;
+                                await doEachAction(xpathText);
+                            }
+                        }
+                        index = 16;
                     } else {
                         await doAction();
                     }
@@ -97,64 +83,59 @@ async function accessSpreadSheet() {
                     switch (robotList[key][action]) {
                         case ACTION.CLICK:
                             await driver.sleep(2000);
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            await waitPageLoad();
-                            await driver.findElement(By.xpath(robotList[key][xpath])).click();
+                            try {
+                                await driver.findElement(By.xpath(robotList[key][xpath])).click();
+                            } catch (error) {
+
+                            }
+                            await seleniumAction.waitPageLoad();
                             await driver.sleep(2000);
-                            await waitPageLoad();
                             break;
                         case ACTION.NEXT_PAGE:
                             await driver.sleep(2000);
-                            await waitPageLoad();
-                            await driver.findElement(By.xpath(robotList[key][xpath])).click();
+                            try {
+                                await driver.findElement(By.xpath(robotList[key][xpath])).click();
+                            } catch (error) {
+
+                            }
                             await driver.sleep(2000);
-                            await waitPageLoad();
+                            await seleniumAction.waitPageLoad();
                             break;
                         case ACTION.GET_ALL:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            temp = await getValue(robotList[key][xpath]);
+                            temp = await seleniumAction.getValue(robotList[key][xpath]);
                             contentList = contentList.concat(temp);
                             break;
                         case ACTION.GET_TITLE:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            temp = await getValue(robotList[key][xpath]);
+                            temp = await seleniumAction.getValue(robotList[key][xpath]);
                             titleList = titleList.concat(temp);
                             break;
                         case ACTION.GET_TIME:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            temp = await getValue(robotList[key][xpath]);
+                            temp = await seleniumAction.getValue(robotList[key][xpath]);
                             timeList = timeList.concat(temp);
                             break;
                         case ACTION.GET_PDF_LINK:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            temp = await getLink(robotList[key][xpath]);
+                            temp = await seleniumAction.getLink(robotList[key][xpath]);
                             pdfLinkList = pdfLinkList.concat(temp);
                             break;
                         case ACTION.GET_IMAGE:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            temp = await getImage(robotList[key][xpath]);
+                            temp = await seleniumAction.getImage(robotList[key][xpath]);
                             imageLinkList = imageLinkList.concat(temp);
                             break;
                         case ACTION.GET_DETAIL_LINK:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            temp = await getLink(robotList[key][xpath]);
+                            temp = await seleniumAction.getLink(robotList[key][xpath]);
                             detailLinkList = detailLinkList.concat(temp);
                             break;
                         case ACTION.GET_OTHER:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            temp = await getValue(robotList[key][xpath]);
+                            temp = await seleniumAction.getValue(robotList[key][xpath]);
                             otherList = otherList.concat(temp);
                             break;
                         case ACTION.DISPLAY_HIDE_ELEMENT:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            await displayHideElement(robotList[key][xpath]);
+                            await seleniumAction.displayHideElement(robotList[key][xpath]);
                             break;
                         case ACTION.CLOSE_FRAME:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
-                            await closeFrame(robotList[key][xpath]);
+                            await seleniumAction.closeFrame(robotList[key][xpath]);
                             break;
                         case ACTION.SWITCH_TO_FRAME:
-                            await driver.wait(webdriver.until.elementLocated(By.xpath(robotList[key][xpath])));
                             let frame = await driver.findElement(By.xpath(robotList[key][xpath]));
                             await driver.switchTo().frame(frame);
                             break;
@@ -164,6 +145,40 @@ async function accessSpreadSheet() {
                         case ACTION.SWITCH_TAB:
                             let windowHandles = await driver.getAllWindowHandles();
                             await driver.switchTo().window(windowHandles[1]);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                async function doEachAction(xpathText) {
+                    switch (robotList[key][action]) {
+                        case ACTION.GET_TITLE:
+                            let title = await seleniumAction.getSingleValue(xpathText);
+                            titleList.push(title);
+                            break;
+                        case ACTION.GET_PDF_LINK:
+                            let pdfLink = await seleniumAction.getSingleLink(xpathText);
+                            pdfLinkList.push(pdfLink);
+                            break;
+                        case ACTION.GET_IMAGE:
+                            let image = await seleniumAction.getSingleImage(xpathText);
+                            imageLinkList.push(image);
+                            break;
+                        case ACTION.GET_DETAIL_LINK:
+                            let detailLink = await seleniumAction.getSingleLink(xpathText);
+                            detailLinkList.push(detailLink);
+                            break;
+                        case ACTION.GET_TIME:
+                            let time = await seleniumAction.getSingleValue(xpathText);
+                            timeList.push(time);
+                            break;
+                        case ACTION.GET_ALL:
+                            let allContent = await seleniumAction.getSingleValue(xpathText);
+                            contentList.push(allContent);
+                            break;
+                        case ACTION.GET_OTHER:
+                            let other = await seleniumAction.getSingleValue(xpathText);
+                            otherList.push(other);
                             break;
                         default:
                             break;
@@ -193,59 +208,6 @@ async function accessSpreadSheet() {
     }
     console.log("All robot done!");
     // await driver.quit();
-}
-
-async function waitPageLoad() {
-    driver.wait(function () {
-        return driver.executeScript('return document.readyState').then(function (readyState) {
-            return readyState === 'complete';
-        });
-    });
-}
-
-async function getValue(xpath) {
-    let resultList = await driver.findElements(By.xpath(xpath));
-    let results = await map(resultList, async e => {
-            await driver.executeScript("arguments[0].style.display = 'block';", e)
-            return e.getText();
-        })
-        .then(function (values) {
-            return values;
-        });
-
-    return results;
-}
-
-async function displayHideElement(xpath) {
-    let resultList = await driver.findElements(By.xpath(xpath));
-    resultList.forEach(async element => {
-        await driver.executeScript("arguments[0].style.display = 'block';", element)
-    })
-}
-
-async function closeFrame(xpath) {
-    let element = await driver.findElement(By.xpath(xpath));
-    await driver.executeScript("arguments[0].style.display = 'none';", element)
-}
-
-async function getLink(xpath) {
-    let resultList = await driver.findElements(By.xpath(xpath));
-    let results = await map(resultList, e => e.getAttribute('href'))
-        .then(function (values) {
-            return values;
-        });
-
-    return results;
-}
-
-async function getImage(xpath) {
-    let resultList = await driver.findElements(By.xpath(xpath));
-    let results = await map(resultList, e => e.getAttribute('src'))
-        .then(function (values) {
-            return values;
-        });
-
-    return results;
 }
 
 accessSpreadSheet();

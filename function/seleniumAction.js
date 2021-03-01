@@ -71,6 +71,16 @@ module.exports.displayHideElement = async function (xpath) {
     }
 }
 
+module.exports.scrollToBottom = async function () {
+    try {
+        await driver.executeScript("window.scrollTo(0,10000);");
+        await driver.executeScript("window.scrollTo({ top: 0, behavior: 'smooth' })");
+        await driver.sleep(2000);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 module.exports.closeFrame = async function (xpath) {
     try {
 

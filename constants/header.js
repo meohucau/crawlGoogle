@@ -2,11 +2,15 @@ const HEADER = [
     "companyName",
     "title",
     "time",
+    "time2",
     "content",
     "pdfLink",
     "imageLink",
     "detailLink",
-    "other"
+    "type",
+    "other",
+    "other1",
+    "other2"    
 ]
 
 module.exports = {

@@ -35,11 +35,15 @@ async function accessSpreadSheet() {
         let stepCount = 1;
         let titleList = [];
         let timeList = [];
+        let timeList2 = [];
         let contentList = [];
         let pdfLinkList = [];
         let imageLinkList = [];
         let detailLinkList = [];
+        let typeList = [];
         let otherList = [];
+        let otherList1 = [];
+        let otherList2 = [];
         let elementList = [];
         if (robotList[key].URL !== undefined && robotList[key].URL !== null && robotList[key].URL !== '') {
             ++robotCount;
@@ -68,7 +72,7 @@ async function accessSpreadSheet() {
                                 xpath = `Xpath${i}`;
                                 let xpathText = robotList[key][xpath].replace('variable', String(loop));
                                 action = `Action${i}`;
-                                await doEachAction(xpathText);
+                                await doEachAction(xpathText, elementList[loop - 1]);
                             }
                         }
                         index = 16;
@@ -113,6 +117,10 @@ async function accessSpreadSheet() {
                             temp = await seleniumAction.getValue(robotList[key][xpath]);
                             timeList = timeList.concat(temp);
                             break;
+                        case ACTION.GET_TIME_2:
+                            temp = await seleniumAction.getValue(robotList[key][xpath]);
+                            timeList2 = timeList2.concat(temp);
+                            break;
                         case ACTION.GET_PDF_LINK:
                             temp = await seleniumAction.getLink(robotList[key][xpath]);
                             pdfLinkList = pdfLinkList.concat(temp);
@@ -125,9 +133,21 @@ async function accessSpreadSheet() {
                             temp = await seleniumAction.getLink(robotList[key][xpath]);
                             detailLinkList = detailLinkList.concat(temp);
                             break;
+                        case ACTION.GET_TYPE:
+                            temp = await seleniumAction.getLink(robotList[key][xpath]);
+                            typeList = typeList.concat(temp);
+                            break;
                         case ACTION.GET_OTHER:
                             temp = await seleniumAction.getValue(robotList[key][xpath]);
                             otherList = otherList.concat(temp);
+                            break;
+                        case ACTION.GET_OTHER_1:
+                            temp = await seleniumAction.getValue(robotList[key][xpath]);
+                            otherList1 = otherList1.concat(temp);
+                            break;
+                        case ACTION.GET_OTHER_2:
+                            temp = await seleniumAction.getValue(robotList[key][xpath]);
+                            otherList2 = otherList2.concat(temp);
                             break;
                         case ACTION.DISPLAY_HIDE_ELEMENT:
                             await seleniumAction.displayHideElement(robotList[key][xpath]);
@@ -146,12 +166,17 @@ async function accessSpreadSheet() {
                             let windowHandles = await driver.getAllWindowHandles();
                             await driver.switchTo().window(windowHandles[1]);
                             break;
+                        case ACTION.SCROLL_TO_BOTTOM:
+                            await seleniumAction.scrollToBottom();
                         default:
                             break;
                     }
                 }
-                async function doEachAction(xpathText) {
+                async function doEachAction(xpathText, element) {
                     switch (robotList[key][action]) {
+                        case ACTION.CLICK:
+                            element.click();
+                            await driver.sleep(1000);
                         case ACTION.GET_TITLE:
                             let title = await seleniumAction.getSingleValue(xpathText);
                             titleList.push(title);
@@ -172,13 +197,29 @@ async function accessSpreadSheet() {
                             let time = await seleniumAction.getSingleValue(xpathText);
                             timeList.push(time);
                             break;
+                        case ACTION.GET_TIME_2:
+                            let time2 = await seleniumAction.getSingleValue(xpathText);
+                            timeList2.push(time2);
+                            break;
                         case ACTION.GET_ALL:
                             let allContent = await seleniumAction.getSingleValue(xpathText);
                             contentList.push(allContent);
                             break;
+                        case ACTION.GET_TYPE:
+                            let type = await seleniumAction.getSingleValue(xpathText);
+                            typeList.push(type);
+                            break;
                         case ACTION.GET_OTHER:
                             let other = await seleniumAction.getSingleValue(xpathText);
                             otherList.push(other);
+                            break;
+                        case ACTION.GET_OTHER_1:
+                            let other1 = await seleniumAction.getSingleValue(xpathText);
+                            otherList1.push(other1);
+                            break;
+                        case ACTION.GET_OTHER_2:
+                            let other2 = await seleniumAction.getSingleValue(xpathText);
+                            otherList2.push(other2);
                             break;
                         default:
                             break;
@@ -191,11 +232,15 @@ async function accessSpreadSheet() {
                         companyName: robotList[key].Name,
                         title: titleList[i],
                         time: timeList[i],
+                        time2: timeList2[i],
                         content: contentList[i],
                         pdfLink: pdfLinkList[i],
                         imageLink: imageLinkList[i],
                         detailLink: detailLinkList[i],
-                        other: otherList[i]
+                        type: typeList[i],
+                        other: otherList[i],
+                        other1: otherList1[i],
+                        other2: otherList2[i]
                     })
                 }
                 await sheet2.addRows(insertList);

@@ -21,7 +21,13 @@ const ACTION = {
     SWITCH_TAB: "Switch Tab",
     FOR_EACH_ELEMENT: "For Each Element",
 }
+const STEP = {
+    STEP_FOR_EACH: 'StepForEach',
+    XPATH: 'Xpath',
+    ACTION: 'Action',
+    VARIABLE: 'variable'
+}
 
 module.exports = {
-    ACTION
+    ACTION, STEP
 }

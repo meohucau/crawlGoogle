@@ -6,7 +6,7 @@ var webdriver = require('selenium-webdriver'),
 map = webdriver.promise.map;
 require('dotenv').config();
 const {
-    ACTION
+    ACTION, STEP
 } = require('./constants/action');
 const {
     HEADER
@@ -51,31 +51,32 @@ async function accessSpreadSheet() {
             await driver.get(robotList[key].URL);
             await seleniumAction.waitPageLoad();
             for (let index = 1; index <= 15; index++) {
-                let xpath = `Xpath${stepCount}`;
-                let action = `Action${stepCount}`;
+                let xpath = `${STEP.XPATH}${stepCount}`;
+                let action = `${STEP.ACTION}${stepCount}`;
                 let temp = [];
                 if (robotList[key][xpath] && robotList[key][action]) {
                     if (robotList[key][action] === ACTION.LOOP) {
                         let arrStep = robotList[key][xpath].split('-');
                         for (let loop = 0; loop < Number(arrStep[2]); loop++) {
                             for (let i = Number(arrStep[0]); i <= Number(arrStep[1]); i++) {
-                                xpath = `Xpath${i}`;
-                                action = `Action${i}`;
+                                xpath = `${STEP.XPATH}${i}`;
+                                action = `${STEP.ACTION}${i}`;
                                 await doAction();
                             }
                         }
+                        index = arrStep[1];
                     } else if (robotList[key][action] === ACTION.FOR_EACH_ELEMENT) {
                         elementList = await driver.findElements(By.xpath(robotList[key][xpath]));
-                        let arrStep = robotList[key]['StepForEach'].split('-');
+                        let arrStep = robotList[key][STEP.STEP_FOR_EACH].split('-');
                         for (let loop = 1; loop <= elementList.length; loop++) {
                             for (let i = Number(arrStep[0]); i <= Number(arrStep[1]); i++) {
-                                xpath = `Xpath${i}`;
-                                let xpathText = robotList[key][xpath].replace('variable', String(loop));
-                                action = `Action${i}`;
+                                xpath = `${STEP.XPATH}${i}`;
+                                let xpathText = robotList[key][xpath].replace(STEP.VARIABLE, String(loop));
+                                action = `${STEP.ACTION}${i}`;
                                 await doEachAction(xpathText, elementList[loop - 1]);
                             }
                         }
-                        index = 16;
+                        index = arrStep[1];
                     } else {
                         await doAction();
                     }
@@ -175,8 +176,12 @@ async function accessSpreadSheet() {
                 async function doEachAction(xpathText, element) {
                     switch (robotList[key][action]) {
                         case ACTION.CLICK:
-                            element.click();
-                            await driver.sleep(1000);
+                            try {    
+                                await element.click();
+                                await driver.sleep(1000);
+                            } catch (error) {
+                                console.log(error);
+                            }
                         case ACTION.GET_TITLE:
                             let title = await seleniumAction.getSingleValue(xpathText);
                             titleList.push(title);
